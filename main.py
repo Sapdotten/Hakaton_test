@@ -1,3 +1,4 @@
+
 import bs4
 print('hui')
 
@@ -21,3 +22,5 @@ def start():
         'join_club': 'как попасть в robotic?',
         'remind': 'напомни'
     }
+print('Sapdotten commit')
+import bs4
