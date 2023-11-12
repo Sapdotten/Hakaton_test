@@ -16,4 +16,8 @@ def start():
         'projects': 'проекты и мероприятия',
         'join_club': 'как попасть в robotic?',
         'remind': 'напомни'
+        'about_club': 'что такое robotic?',
+        'projects': 'проекты и мероприятия',
+        'join_club': 'как попасть в robotic?',
+        'remind': 'напомни'
     }
