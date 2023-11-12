@@ -1,10 +1,11 @@
 import http.client
 import json
+
 import os
 import urllib.parse as up
 import psycopg2
 
-
+# код для подключения к back4app
 connection = http.client.HTTPSConnection('parseapi.back4app.com', 443)
 connection.connect()
 connection.request('GET', '/schemas/_Session', '', {
@@ -18,6 +19,7 @@ result = json.loads(connection.getresponse().read())
 print(result)
 
 
+# код для подключения к postgress
 conn = psycopg2.connect(database='bvpzpagm',
                         user='bvpzpagm',
                         password='m8iAJHQshv9I-_ka_hzbZFGLYTlnsd4-',
