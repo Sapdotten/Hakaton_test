@@ -21,3 +21,7 @@ def start():
         'join_club': 'как попасть в robotic?',
         'remind': 'напомни'
     }
+
+
+def print(a):
+    pass
