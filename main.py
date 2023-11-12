@@ -7,6 +7,7 @@ def main():
     print("hi")
 
 
+
 def start():
     global __commands
     __commands = {
@@ -21,6 +22,8 @@ def start():
         'join_club': 'как попасть в robotic?',
         'remind': 'напомни'
     }
+def p():
+    pass
 
 
 def print(a):
