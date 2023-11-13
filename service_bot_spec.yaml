@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Game mediator
+  description: |-
+    Контракт сервиса и бота для игры в крестики нолики
+  version: 1.0.0
+tags:
+  - name: service
+    description: (КОНТРАКТ СЕРВИСА) Контракт сервиса для бота
+  - name: bot
+    description: (КОНТРАКТ БОТА) Контракт бота для севриса
+paths:
+  /sessions/{session_id}/registration:
+    post:
+      tags:
+        - service
+      summary: Зарегистрировать бота в игровой сессии
+      description: Бот с bot_id регистрируется в игровой сессии с session_id
+      operationId: registerBot
+      parameters:
+        - name: session_id
+          in: path
+          description: UUID сессии. Передаем в контейнер через env переменную SESSION_ID
+          required: true
+          schema:
+            type: string
+            format: UUID
+      requestBody:
+        description: Данные для регистрации бота в сессии
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterBotInSessionRequest'
+        required: true
+      responses:
+        '200':
+          description: Бот успешно зарегистрирован в сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterBotInSessionResponse'
+        '400':
+          description: Некорректный запрос
+        '404':
+          description: Не найдена игровая сессия с таким session_id
+  /bot/turn:
+    post:
+      tags:
+        - bot
+      summary: Запрос бота сделать ход
+      description: Бот получает текущее игровое поле и возвращает новое игровое поле (сделав новый ход)
+      operationId: makeAMove
+      requestBody:
+        description: Данные, которые получает бот участников хакатона
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotTurnRequest'
+        required: true
+      responses:
+        '200':
+          description: Бот успешно сходил
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotTurnResponse'
+components:
+  schemas:
+    RegisterBotInSessionRequest:
+      type: object
+      properties:
+        bot_id:
+          type: string
+          example: "my_team_bot_id"
+          description: Id бота закрепляется за командой в начале турнира. Передаем команде в начале хакатона и он должен быть сохранен в образе
+        password:
+          type: string
+          example: "my_team_bot_password"
+          description: Пароли бота закрепляется за командой в начале турнира. Передаем команде в начале хакатона и он должен быть сохранен в образе
+        bot_url:
+          type: string
+          example: URL, по которому сервис будет вызывать бота для игры. Передаем в контейнер через env переменную BOT_URL
+    RegisterBotInSessionResponse:
+      type: object
+      properties:
+        figure:
+          #          Фигура, которой бот должен ходить всю игру
+          $ref: "#/components/schemas/Figure"
+    Figure:
+      type: string
+      enum:
+        - x
+        - o
+    BotTurnRequest:
+      type: object
+      properties:
+        game_field:
+          type: string
+          format: Игровое поле свернутое в одну строку построчно (длиной 361 символов)
+          example: "_oo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
+    BotTurnResponse:
+      type: object
+      properties:
+        game_field:
+          type: string
+          format: Игровое поле свернутое в одну строку построчно (длиной 361 символов)
+          example: "ooo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
