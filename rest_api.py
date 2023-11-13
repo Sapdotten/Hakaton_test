@@ -4,7 +4,7 @@ import requests
 import json
 
 
-def register_bot(mediator_url: str, session_id: str, bot_url: str, bot_id: str, password: str):
+def register_bot_in_session(mediator_url: str, session_id: str, bot_url: str, bot_id: str, password: str):
     url = f"http://{mediator_url}/sessions/{session_id}/registration"
     headers = {'Content-Type': 'application/json'}
     bot_data = {
@@ -20,5 +20,23 @@ def register_bot(mediator_url: str, session_id: str, bot_url: str, bot_id: str, 
         print("Некорректный запрос")
     elif response.status_code == 404:
         print("Не найдена игровая сессия с таким session_id")
+    else:
+        print(f"Необработанный статус кода: {response.status_code}")
+
+
+def register_bot(bot_id: str, bot_password: str):
+    url = f"'http://localhost:8080/commands/{bot-id}"
+    headers = {'Content-Type': 'text/plain'}
+    bot_data = {
+        "bot-password": bot_password
+    }
+    response = requests.post(url, data=json.dumps(bot_data), headers=headers)
+    if response.status_code == 200:
+        print("Команда с ботом успешно зарегистрирован")
+        return response.json()
+    elif response.status_code == 400:
+        print("Некорректный запрос")
+    elif response.status_code == 404:
+        print("Не найдена команда с id этого бота")
     else:
         print(f"Необработанный статус кода: {response.status_code}")
