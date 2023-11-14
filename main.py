@@ -12,11 +12,11 @@ if __name__ == "__main_":
     bot_id = ""
     password = ""
     # id сессии, в которой должен участвовать бот
-    SESSION_ID = os.environ.get('SESSION_ID')
+    SESSION_ID = os.environ['SESSION_ID']
     # URL для обратной коммуникации медиатора с ботом. Должен передаваться в запросе на регистрацию в сессии
-    BOT_URL = os.environ.get('BOT_URL')
+    BOT_URL = os.environ['BOT_URL']
     # base url, по которому бот может зарегистрироваться в сессии
-    MEDIATOR_URL = os.environ.get('MEDIATOR_URL')
+    MEDIATOR_URL = os.environ['MEDIATOR_URL']
 
     rest_api.register_bot(mediator_url=MEDIATOR_URL,
                           session_id=SESSION_ID,
