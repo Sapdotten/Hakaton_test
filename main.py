@@ -8,11 +8,12 @@ import rest_api
 # MEDIATOR_URL – base url, по которому бот может зарегистрироваться в сессии
 
 
-if __name__ == "__main_":
+if __name__ == "__main__":
     bot_id = ""
     password = ""
     # id сессии, в которой должен участвовать бот
     SESSION_ID = os.environ.get('SESSION_ID')
+    print(SESSION_ID)
     # URL для обратной коммуникации медиатора с ботом. Должен передаваться в запросе на регистрацию в сессии
     BOT_URL = os.environ.get('BOT_URL')
     # base url, по которому бот может зарегистрироваться в сессии
@@ -23,3 +24,4 @@ if __name__ == "__main_":
                           bot_url=BOT_URL,
                           bot_id=bot_id,
                           password=password)
+
