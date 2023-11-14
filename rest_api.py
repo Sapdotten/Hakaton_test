@@ -23,3 +23,17 @@ def register_bot_in_session(mediator_url: str, session_id: str, bot_url: str, bo
     else:
         print(f"Необработанный статус кода: {response.status_code}")
 
+
+def bot_turn(mediator_url: str, game_field: str):
+    url = f"http://{mediator_url}/bot/turn"
+    headers = {'Content-Type': 'application/json'}
+    game_field_data = {
+        "game_field": game_field
+    }
+    response = requests.post(url, data=json.dumps(game_field_data), headers=headers)
+    if response.status_code == 200:
+        print("Бот успешно сходил")
+        return response.json()
+    else:
+        print(f"Необработанный статус кода: {response.status_code}")
+
