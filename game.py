@@ -31,10 +31,10 @@ class Field:
                 '_p_pp_',
                 ]
 
-    def __init__(self, field: str):
+    def __init__(self, field: str, char_: str):
         global char
-        self.char = char
-        if char == 'x':
+        self.char = char_
+        if char_ == 'x':
             self.enemy_char = 'o'
         else:
             self.enemy_char = 'x'
@@ -46,10 +46,13 @@ class Field:
         if self.is_empty():
             self.first_turn()
             return self.field
+        if not self.is_our_on_field():
+            self.second_turn()
+            return self.field
         data = self.is_danger_pattern(self.enemy_char)
         if data is not None:
             p_ind = data[0]
-            pattern = data[1]
+            pattern = data[1].replace('x', 'p').replace('o', 'p')
             type_ = data[2]
             t_ind = self.is_T_pattern(p_ind, pattern, type_, self.enemy_char)
             if t_ind is not None:
@@ -61,7 +64,6 @@ class Field:
                 return self.field
 
     def get_block_ind(self, ind_: int, pattern: str, type_: str) -> int:
-        pattern = pattern.replace('o', 'p').replace('x', 'p')
         i = get_offset(type_)
         if pattern == 'ppp_ppp' or pattern == 'ppp_p' or pattern == '_pp_p_':
             return ind_ + 3 * i
@@ -109,6 +111,23 @@ class Field:
 
     def second_turn(self):
         ind_ = self.field.find(self.enemy_char)
+        y, x = self.get_coords(ind_)
+        if 7 <= y <= 11 and 7 <= x <= 11:
+            if y == 9 and x == 9:
+                self.set_value(183, self.char)
+            else:
+                pos = 180
+                if y > 9:
+                    pos -= 57
+                else:
+                    pos += 57
+                if x > 9:
+                    pos -= 3
+                else:
+                    pos += 3
+                self.set_value(pos, self.char)
+        else:
+            self.set_value(180, self.char)
 
     def get_count(self, id_: int, offsets: list) -> int:
         count = 0
@@ -241,6 +260,14 @@ def get_offset(type_: str) -> int:
     return i
 
 
+def print_field(field: str):
+    for i in range(0, 19):
+        res = ""
+        for elem in field[i * 19:i * 19 + 19]:
+            res += f"|{elem}"
+        print(res)
+
+
 char = 'o'
 c = "_oo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
 
@@ -251,24 +278,22 @@ a += "_________________x_"
 a += "_________________x_"
 a += "___________________" * 14
 
-f = Field(c)
+d = '_'*361
+f = Field(d, 'x')
 t1 = time.time()
 # l = f.is_danger_pattern(f.enemy_char)
 # print(l)
 # print(f.is_T_pattern(l[0], l[1], l[2], f.enemy_char))
 # print(f.get_most_closer_place([l[0] + 2]))
 
-for i in range(0, 19):
-    b = ""
-    for elem in c[i * 19:i * 19 + 19]:
-        b += f"|{elem}"
-    print(b)
-c = f.make_turn()
+field = f.make_turn()
+print_field(field)
+print('---------------------------move---------------------------')
+f = Field(field, 'o')
+field = f.make_turn()
+print_field(field)
+
 print("Making a move: ")
-for i in range(0, 19):
-    b = ""
-    for elem in c[i * 19:i * 19 + 19]:
-        b += f"|{elem}"
-    print(b)
+
 t2 = time.time()
 print(t2 - t1)
