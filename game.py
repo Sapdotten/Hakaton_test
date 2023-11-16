@@ -30,6 +30,20 @@ class Field:
                 '__ppp_',
                 '_p_pp_',
                 ]
+    # НЕ ЗАБУДЬ ЗАБАНИТЬ ТЕХ, КТО УЖЕ ЗАБЛОЧЕН
+    pred_patterns = {'pp__p': [2, 3],
+                     'p_p_p': [1, 3],
+                     '_pp_p': [0, 3],
+                     'p__pp': [1, 2],
+                     '_p_pp': [0, 2],
+                     'p_pp_': [1, 4],
+                     '_ppp_': [0, 4],
+                     '__p_p_': [0, 1, 3, 5],
+                     '_p__p_': [0, 2, 3, 5],
+                     '_pp___': [0, 3, 4, 5],
+                     '_p_p__': [0, 2, 4, 5],
+                     '___pp_': [0, 1, 2, 5]
+                     }
 
     def __init__(self, field: str, char_: str):
         global char
@@ -43,13 +57,17 @@ class Field:
         #     self.field.append(field[19 * i:19 * i + 1])
 
     def make_turn(self) -> str:
+        # если первый ход
         if self.is_empty():
             self.first_turn()
             return self.field
+        # если второй ход
         if not self.is_our_on_field():
             self.second_turn()
             return self.field
+        # если у врага есть опасные комбинации
         data = self.is_danger_pattern(self.enemy_char)
+        print(data)
         if data is not None:
             p_ind = data[0]
             pattern = data[1].replace('x', 'p').replace('o', 'p')
@@ -62,6 +80,27 @@ class Field:
                 ind = self.get_block_ind(p_ind, pattern, type_)
                 self.set_value(ind, self.char)
                 return self.field
+        #     ищем опасные комбинации у нас
+        data = self.is_danger_pattern(self.char)
+        print(data)
+        # если они есть
+        if data is not None:
+            p_ind = data[0]
+            pattern = data[1].replace('x', 'p').replace('o', 'p')
+            type_ = data[2]
+            #         проверяем наличие Т паттерна
+            t_ind = self.is_T_pattern(p_ind, pattern, type_, self.char)
+            #         если он есть
+            if t_ind is not None:
+                self.set_value(t_ind, self.char)
+                return self.field
+            else:
+                ind = self.get_block_ind(p_ind, pattern, type_)
+                self.set_value(ind, self.char)
+                return self.field
+
+    def get_id_by_predpattern(self):
+        pass
 
     def get_block_ind(self, ind_: int, pattern: str, type_: str) -> int:
         i = get_offset(type_)
@@ -90,6 +129,7 @@ class Field:
 
     def set_value(self, ind_: int, value: str):
         self.field = self.field[:ind_] + value + self.field[ind_ + 1:]
+        print(f'Set value {value} to {ind_}')
 
     def is_empty(self):
         if self.field == '_' * 361:
@@ -171,33 +211,38 @@ class Field:
                     max_id = id_
         return max_id
 
-    def is_danger_pattern(self, char_: str) -> tuple[int, str, str]:
+    def find_pattern(self, pattern) -> Union[None, tuple[int, str, str]]:
+        for i in range(0, 19):
+            ind_row = self.field[i * 19:i * 19 + 19].find(pattern)
+            ind_column = self.field[i:i + 19 * 18:19].find(pattern)
+            ind_up1 = self.field[i * 19:i - 1:-18].find(pattern)
+            ind_up2 = self.field[342 + i:19 * i + 19:-18].find(pattern)
+            ind_down1 = self.field[18 - i: 19 + 19 * i:20].find(pattern)
+            ind_down2 = self.field[19 * i:361 - i:20].find(pattern)
+            if ind_row != -1:
+                return i * 19 + ind_row, pattern, 'row'
+            if ind_column != -1:
+                return ind_column * 19 + i, pattern, 'column'
+            if ind_up1 != -1:
+                return (i - ind_up1) * 19 + ind_up1, pattern, 'diagonal_up'
+            if ind_up2 != -1:
+                return (18 - ind_up2) * 19 + i + ind_up2, pattern, 'diagonal_up'
+            if ind_down1 != -1:
+                return ind_down1 * 19 + 18 - (i - ind_down1), pattern, 'diagonal_down'
+            if ind_down2 != -1:
+                return (ind_down2 + i) * 19 + ind_down2, pattern, 'diagonal_down'
+        return None
+
+    def is_danger_pattern(self, char_: str) -> Union[None, tuple[int, str, str]]:
 
         patterns = []
         for elem in self.patterns:
             patterns.append(elem.replace('p', char_))
-        for i in range(0, 19):
-            for pattern in patterns:
-                ind = self.field[i * 19:i * 19 + 19].find(pattern)
-                if ind != -1:
-                    return i * 19 + ind, pattern, 'row'
-                indw = self.field[i:i + 19 * 18:19].find(pattern)
-                if indw != -1:
-                    return indw * 19 + i, pattern, 'column'
-        for i in range(0, 19):
-            for pattern in patterns:
-                ind = self.field[i * 19:i - 1:-18].find(pattern)
-                ind_d = self.field[342 + i:19 * i + 19:-18].find(pattern)
-                ind_lu = self.field[18 - i: 19 + 19 * i:20].find(pattern)
-                ind_ld = self.field[19 * i:361 - i:20].find(pattern)
-                if ind != -1:
-                    return (i - ind) * 19 + ind, pattern, 'diagonal_up'
-                if ind_d != -1:
-                    return (18 - ind_d) * 19 + i + ind_d, pattern, 'diagonal_up'
-                if ind_lu != -1:
-                    return ind_lu * 19 + 18 - (i - ind_lu), pattern, 'diagonal_down'
-                if ind_ld != -1:
-                    return (ind_ld + i) * 19 + ind_ld, pattern, 'diagonal_down'
+        for pattern in patterns:
+            ind = self.find_pattern(pattern)
+            if ind:
+                return ind
+        return None
 
     def check_neighbors(self, id_: int, type_: str, char_: str) -> bool:
         """
@@ -254,7 +299,7 @@ def get_offset(type_: str) -> int:
     if type_ == 'column':
         i = 19
     elif type_ == 'diagonal_up':
-        i = 18
+        i = -18
     elif type_ == 'diagonal_down':
         i = 20
     return i
@@ -271,25 +316,27 @@ def print_field(field: str):
 char = 'o'
 c = "_oo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
 
-a = "_________________x_"
+a = "___________________"
 a += "________________x_x"
 a += "_________________x_"
 a += "_________________x_"
 a += "_________________x_"
 a += "___________________" * 14
 
-d = '_'*361
-f = Field(d, 'x')
+d = '_' * 361
 t1 = time.time()
+f = Field(c, 'o')
+
 # l = f.is_danger_pattern(f.enemy_char)
 # print(l)
 # print(f.is_T_pattern(l[0], l[1], l[2], f.enemy_char))
 # print(f.get_most_closer_place([l[0] + 2]))
-
+print_field(c)
+print('---------------------------move---------------------------')
 field = f.make_turn()
 print_field(field)
 print('---------------------------move---------------------------')
-f = Field(field, 'o')
+f = Field(field, 'x')
 field = f.make_turn()
 print_field(field)
 
