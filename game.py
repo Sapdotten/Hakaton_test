@@ -44,6 +44,10 @@ class Field:
                      '_p_p__': [0, 2, 4, 5],
                      '___pp_': [0, 1, 2, 5]
                      }
+    first_patterns = {'_p____': [2],
+                      '__p___': [1, 3],
+                      '___p__': [2, 4],
+                      '____p_': [3]}
 
     def __init__(self, field: str, char_: str):
         global char
@@ -57,6 +61,7 @@ class Field:
         #     self.field.append(field[19 * i:19 * i + 1])
 
     def make_turn(self) -> str:
+        """Возвращает ход"""
         # если первый ход
         if self.is_empty():
             self.first_turn()
@@ -98,11 +103,52 @@ class Field:
                 ind = self.get_block_ind(p_ind, pattern, type_)
                 self.set_value(ind, self.char)
                 return self.field
+        else:
+            # ищем у нас предпобедные комбинации
+            ind = self.get_id_by_predpattern()
+            if ind is not None:
+                self.set_value(ind, self.char)
+                return self.field
+            # если таковых нет:
+            else:
+                ind = self.get_id_by_first_patterns()
+                self.set_value(ind, self.char)
+                return self.field
 
-    def get_id_by_predpattern(self):
-        pass
+    def get_id_by_predpattern(self) -> Union[None, int]:
+        good_inds = set()
+
+        for pattern in self.pred_patterns.keys():
+            pattern_ = pattern.replace('p', self.char)
+            data = self.find_pattern(pattern_)
+            if data:
+                i = get_offset(data[2])
+                temp = Field(self.field, self.char)
+                for p_id in self.pred_patterns[pattern]:
+                    good_inds.add(p_id * i + data[0])
+                    temp.set_value(data[0] + p_id * i, self.char)
+                    t_id = temp.is_T_pattern(data[0], data[1], data[2], self.char)
+                    if t_id is not None:
+                        return data[0] + p_id * i
+        good_inds = list(good_inds)
+        if len(good_inds) != 0:
+            return self.get_most_closer_place(good_inds)
+        return None
+
+    def get_id_by_first_patterns(self) -> int:
+        good_inds = set()
+        for pattern in self.first_patterns.keys():
+            pattern_ = pattern.replace('p', self.char)
+            data = self.find_pattern(pattern_)
+            if data:
+                i = get_offset(data[2])
+                for p_id in self.first_patterns[pattern]:
+                    good_inds.add(p_id * i + data[0])
+        good_inds = list(good_inds)
+        return self.get_most_closer_place(good_inds)
 
     def get_block_ind(self, ind_: int, pattern: str, type_: str) -> int:
+        """Определяет ид для блокировки паттерна"""
         i = get_offset(type_)
         if pattern == 'ppp_ppp' or pattern == 'ppp_p' or pattern == '_pp_p_':
             return ind_ + 3 * i
@@ -128,28 +174,33 @@ class Field:
         self.field = self.field[:i * 19 + j] + value + self.field[i * 19 + j + 1:]
 
     def set_value(self, ind_: int, value: str):
+        """Устанавливает значение в индекс строки"""
         self.field = self.field[:ind_] + value + self.field[ind_ + 1:]
-        print(f'Set value {value} to {ind_}')
 
     def is_empty(self):
+        """Проверяет пустая ли строка"""
         if self.field == '_' * 361:
             return True
         return False
 
     def first_turn(self):
+        """делает первый ход"""
         self.ind(9, 9, self.char)
 
     def is_our_on_field(self):
+        """Проверяет, есть ли наши фигуры на поле"""
         if self.char in self.field:
             return True
         return False
 
     def get_coords(self, ind_: int) -> tuple[int, int]:
+        """Получает координаты массива по индексу строки"""
         col = ind_ % 19
         row = ind_ // 19
         return row, col
 
     def second_turn(self):
+        """Делает ход, если мы ходим вторыми"""
         ind_ = self.field.find(self.enemy_char)
         y, x = self.get_coords(ind_)
         if 7 <= y <= 11 and 7 <= x <= 11:
@@ -170,6 +221,7 @@ class Field:
             self.set_value(180, self.char)
 
     def get_count(self, id_: int, offsets: list) -> int:
+        """Считает баллы клетки в зависимости от соседей"""
         count = 0
         for offset in offsets:
             if self.field[id_ + offset] == self.char:
@@ -179,6 +231,7 @@ class Field:
         return count
 
     def get_most_closer_place(self, ids: list) -> int:
+        """Вычисляет клетки, которые ближе всего к нашим"""
         offsets = [-20, -19, -18, 1, 20, 19, 18, -1]
         max_count = -9
         max_id = 0
@@ -212,6 +265,7 @@ class Field:
         return max_id
 
     def find_pattern(self, pattern) -> Union[None, tuple[int, str, str]]:
+        """Находит паттерн в строке (матрице)"""
         for i in range(0, 19):
             ind_row = self.field[i * 19:i * 19 + 19].find(pattern)
             ind_column = self.field[i:i + 19 * 18:19].find(pattern)
@@ -234,6 +288,7 @@ class Field:
         return None
 
     def is_danger_pattern(self, char_: str) -> Union[None, tuple[int, str, str]]:
+        """Проверяет еть ли в строке опасные паттерны"""
 
         patterns = []
         for elem in self.patterns:
@@ -323,24 +378,37 @@ a += "_________________x_"
 a += "_________________x_"
 a += "___________________" * 14
 
-d = '_' * 361
+field = '_' * 361
 t1 = time.time()
-f = Field(c, 'o')
+f = Field(field, 'x')
+for i in range(0, 10):
+    print_field(field)
+    print("="*20)
+    f = Field(field, 'x')
+    field = f.make_turn()
+    print_field(field)
+    print("=" * 20)
+    f = Field(field, 'o')
+    field = f.make_turn()
+
+print_field(field)
+print("=" * 20)
+
 
 # l = f.is_danger_pattern(f.enemy_char)
 # print(l)
 # print(f.is_T_pattern(l[0], l[1], l[2], f.enemy_char))
 # print(f.get_most_closer_place([l[0] + 2]))
-print_field(c)
-print('---------------------------move---------------------------')
-field = f.make_turn()
-print_field(field)
-print('---------------------------move---------------------------')
-f = Field(field, 'x')
-field = f.make_turn()
-print_field(field)
-
-print("Making a move: ")
+# print_field(c)
+# print('---------------------------move---------------------------')
+# field = f.make_turn()
+# print_field(field)
+# print('---------------------------move---------------------------')
+# f = Field(field, 'x')
+# field = f.make_turn()
+# print_field(field)
+#
+# print("Making a move: ")
 
 t2 = time.time()
 print(t2 - t1)
