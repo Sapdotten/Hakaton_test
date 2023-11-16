@@ -4,21 +4,14 @@ import time
 from typing import Union
 
 
-def set_figure(char_: str):
-    global char
-    char = char_
-
-
-def get_answer(field: str) -> str:
-    """
-    Получаем поле в виде строки из 361 символа
-    :param field: поле в виде строки из 361 символа
-    :return: строку 361 символ
-    """
-    pass
-
-
 class Field:
+    mega_patterns = {'ppp_ppp': 3,
+                     'ppp_p': 3,
+                     'pp_pp': 2,
+                     'p_ppp': 1,
+                     'pppp_': 4,
+                     '_pppp': 0}
+
     patterns = ['ppp_ppp',
                 'ppp_p',
                 'pp_pp',
@@ -30,7 +23,7 @@ class Field:
                 '__ppp_',
                 '_p_pp_',
                 ]
-    # НЕ ЗАБУДЬ ЗАБАНИТЬ ТЕХ, КТО УЖЕ ЗАБЛОЧЕН
+
     pred_patterns = {'pp__p': [2, 3],
                      'p_p_p': [1, 3],
                      '_pp_p': [0, 3],
@@ -70,6 +63,17 @@ class Field:
         if not self.is_our_on_field():
             self.second_turn()
             return self.field
+
+        data = self.is_mega_patterns()
+        if data is not None:
+            ind = data[0]
+            pattern = data[1]
+            type_ = data[2]
+            offset = get_offset(type_)
+            i = self.mega_patterns[pattern.replace('x', 'p').replace('o', 'p')]
+            self.set_value(ind+i*offset, self.char)
+            return self.field
+
         # если у врага есть опасные комбинации
         data = self.is_danger_pattern(self.enemy_char)
         print(data)
@@ -115,6 +119,16 @@ class Field:
                 self.set_value(ind, self.char)
                 return self.field
 
+    def is_mega_patterns(self):
+        patterns = []
+        for elem in self.mega_patterns:
+            patterns.append(elem.replace('p', self.char))
+        for pattern in patterns:
+            ind = self.find_pattern(pattern)
+            if ind:
+                return ind
+        return None
+
     def get_id_by_predpattern(self) -> Union[None, int]:
         good_inds = set()
 
@@ -139,8 +153,27 @@ class Field:
         good_inds = set()
         for pattern in self.first_patterns.keys():
             pattern_ = pattern.replace('p', self.char)
-            data = self.find_pattern(pattern_)
-            if data:
+            DATA = []
+            for i in range(0, 19):
+                ind_row = self.field[i * 19:i * 19 + 19].find(pattern_)
+                ind_column = self.field[i:i + 19 * 18:19].find(pattern_)
+                ind_up1 = self.field[i * 19:i - 1:-18].find(pattern_)
+                ind_up2 = self.field[342 + i:19 * i + 19:-18].find(pattern_)
+                ind_down1 = self.field[18 - i: 19 + 19 * i:20].find(pattern_)
+                ind_down2 = self.field[19 * i:361 - i:20].find(pattern_)
+                if ind_row != -1:
+                    DATA.append([i * 19 + ind_row, pattern_, 'row'])
+                if ind_column != -1:
+                    DATA.append([ind_column * 19 + i, pattern_, 'column'])
+                if ind_up1 != -1:
+                    DATA.append([(i - ind_up1) * 19 + ind_up1, pattern_, 'diagonal_up'])
+                if ind_up2 != -1:
+                    DATA.append([(18 - ind_up2) * 19 + i + ind_up2, pattern_, 'diagonal_up'])
+                if ind_down1 != -1:
+                    DATA.append([ind_down1 * 19 + 18 - (i - ind_down1), pattern_, 'diagonal_down'])
+                if ind_down2 != -1:
+                    DATA.append([(ind_down2 + i) * 19 + ind_down2, pattern_, 'diagonal_down'])
+            for data in DATA:
                 i = get_offset(data[2])
                 for p_id in self.first_patterns[pattern]:
                     good_inds.add(p_id * i + data[0])
@@ -251,7 +284,7 @@ class Field:
                     count = self.get_count(id_, offsets[1:4])
                 elif id_ == 360:
                     count = self.get_count(id_, offsets[0:2] + offsets[7:9])
-                if 0 < id_ < 18:
+                elif 0 < id_ < 18:
                     count = self.get_count(id_, offsets[3:8])
                 elif (id_ + 1) % 19 == 0:
                     count = self.get_count(id_, offsets[0:2] + offsets[5:9])
@@ -381,19 +414,20 @@ a += "___________________" * 14
 field = '_' * 361
 t1 = time.time()
 f = Field(field, 'x')
-for i in range(0, 10):
+for i in range(0, 11):
     print_field(field)
-    print("="*20)
+    print("=" * 20)
     f = Field(field, 'x')
     field = f.make_turn()
+    print("X turn: ")
     print_field(field)
     print("=" * 20)
     f = Field(field, 'o')
+    print("O turn: ")
     field = f.make_turn()
 
 print_field(field)
 print("=" * 20)
-
 
 # l = f.is_danger_pattern(f.enemy_char)
 # print(l)
