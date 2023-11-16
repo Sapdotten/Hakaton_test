@@ -234,19 +234,19 @@ class Field:
         """Делает ход, если мы ходим вторыми"""
         ind_ = self.field.find(self.enemy_char)
         y, x = self.get_coords(ind_)
-        if 7 <= y <= 11 and 7 <= x <= 11:
+        if 4 <= y <= 14 and 4 <= x <= 14:
             if y == 9 and x == 9:
                 self.set_value(181, self.char)
             else:
-                pos = 180
+                pos = ind_
                 if y > 9:
-                    pos -= 57
-                else:
-                    pos += 57
+                    pos -= 19
+                elif y < 9:
+                    pos += 19
                 if x > 9:
-                    pos -= 3
-                else:
-                    pos += 3
+                    pos -= 1
+                elif x < 9:
+                    pos += 1
                 self.set_value(pos, self.char)
         else:
             self.set_value(180, self.char)
