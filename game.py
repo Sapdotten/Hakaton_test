@@ -71,12 +71,11 @@ class Field:
             type_ = data[2]
             offset = get_offset(type_)
             i = self.mega_patterns[pattern.replace('x', 'p').replace('o', 'p')]
-            self.set_value(ind+i*offset, self.char)
+            self.set_value(ind + i * offset, self.char)
             return self.field
 
         # если у врага есть опасные комбинации
         data = self.is_danger_pattern(self.enemy_char)
-        print(data)
         if data is not None:
             p_ind = data[0]
             pattern = data[1].replace('x', 'p').replace('o', 'p')
@@ -90,10 +89,9 @@ class Field:
                 self.set_value(ind, self.char)
                 return self.field
         #     ищем опасные комбинации у нас
-        data = self.is_danger_pattern(self.char)
-        print(data)
+        DATA = self.is_many_danger_patterns(self.char)
         # если они есть
-        if data is not None:
+        for data in DATA:
             p_ind = data[0]
             pattern = data[1].replace('x', 'p').replace('o', 'p')
             type_ = data[2]
@@ -238,7 +236,7 @@ class Field:
         y, x = self.get_coords(ind_)
         if 7 <= y <= 11 and 7 <= x <= 11:
             if y == 9 and x == 9:
-                self.set_value(183, self.char)
+                self.set_value(181, self.char)
             else:
                 pos = 180
                 if y > 9:
@@ -332,6 +330,33 @@ class Field:
                 return ind
         return None
 
+    def is_many_danger_patterns(self, char_: str):
+        DATA = []
+        patterns = []
+        for elem in self.patterns:
+            patterns.append(elem.replace('p', char_))
+        for pattern_ in patterns:
+            for i in range(0, 19):
+                ind_row = self.field[i * 19:i * 19 + 19].find(pattern_)
+                ind_column = self.field[i:i + 19 * 18:19].find(pattern_)
+                ind_up1 = self.field[i * 19:i - 1:-18].find(pattern_)
+                ind_up2 = self.field[342 + i:19 * i + 19:-18].find(pattern_)
+                ind_down1 = self.field[18 - i: 19 + 19 * i:20].find(pattern_)
+                ind_down2 = self.field[19 * i:361 - i:20].find(pattern_)
+                if ind_row != -1:
+                    DATA.append([i * 19 + ind_row, pattern_, 'row'])
+                if ind_column != -1:
+                    DATA.append([ind_column * 19 + i, pattern_, 'column'])
+                if ind_up1 != -1:
+                    DATA.append([(i - ind_up1) * 19 + ind_up1, pattern_, 'diagonal_up'])
+                if ind_up2 != -1:
+                    DATA.append([(18 - ind_up2) * 19 + i + ind_up2, pattern_, 'diagonal_up'])
+                if ind_down1 != -1:
+                    DATA.append([ind_down1 * 19 + 18 - (i - ind_down1), pattern_, 'diagonal_down'])
+                if ind_down2 != -1:
+                    DATA.append([(ind_down2 + i) * 19 + ind_down2, pattern_, 'diagonal_down'])
+        return DATA
+
     def check_neighbors(self, id_: int, type_: str, char_: str) -> bool:
         """
         Проверяет наличие соседей для выявления Т образного узла
@@ -400,49 +425,49 @@ def print_field(field: str):
             res += f"|{elem}"
         print(res)
 
-
-char = 'o'
-c = "_oo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
-
-a = "___________________"
-a += "________________x_x"
-a += "_________________x_"
-a += "_________________x_"
-a += "_________________x_"
-a += "___________________" * 14
-
-field = '_' * 361
-t1 = time.time()
-f = Field(field, 'x')
-for i in range(0, 11):
-    print_field(field)
-    print("=" * 20)
-    f = Field(field, 'x')
-    field = f.make_turn()
-    print("X turn: ")
-    print_field(field)
-    print("=" * 20)
-    f = Field(field, 'o')
-    print("O turn: ")
-    field = f.make_turn()
-
-print_field(field)
-print("=" * 20)
-
-# l = f.is_danger_pattern(f.enemy_char)
-# print(l)
-# print(f.is_T_pattern(l[0], l[1], l[2], f.enemy_char))
-# print(f.get_most_closer_place([l[0] + 2]))
-# print_field(c)
-# print('---------------------------move---------------------------')
-# field = f.make_turn()
-# print_field(field)
-# print('---------------------------move---------------------------')
-# f = Field(field, 'x')
-# field = f.make_turn()
-# print_field(field)
 #
-# print("Making a move: ")
-
-t2 = time.time()
-print(t2 - t1)
+# char = 'o'
+# c = "_oo___oo_xoxo__xoo_o_oxx_oo_x______o_______x___oo_x_x_o_x_______oxo___o_x__o_o______x__o_____x__o_____o______x_____xoxoo___xo_____o__x_x__________x__x____o_xo__x__o___x_______o_x______xo______oxo_x_xx__xox___ox____x_oo__ox_x_x___o__________x______________o_____x____o___x___xo___x__x_xo__x_x___ox___x_______x____x_o_x__x_o__ox__o__x__ox_x_____x_oo_____x____o_ox"
+#
+# a = "___________________"
+# a += "________________x_x"
+# a += "_________________x_"
+# a += "_________________x_"
+# a += "_________________x_"
+# a += "___________________" * 14
+#
+# field = '_' * 361
+# t1 = time.time()
+# f = Field(field, 'x')
+# for i in range(0, 12):
+#     print_field(field)
+#     print("=" * 20)
+#     f = Field(field, 'x')
+#     field = f.make_turn()
+#     print("X turn: ")
+#     print_field(field)
+#     print("=" * 20)
+#     f = Field(field, 'o')
+#     print("O turn: ")
+#     field = f.make_turn()
+#
+# print_field(field)
+# print("=" * 20)
+#
+# # l = f.is_danger_pattern(f.enemy_char)
+# # print(l)
+# # print(f.is_T_pattern(l[0], l[1], l[2], f.enemy_char))
+# # print(f.get_most_closer_place([l[0] + 2]))
+# # print_field(c)
+# # print('---------------------------move---------------------------')
+# # field = f.make_turn()
+# # print_field(field)
+# # print('---------------------------move---------------------------')
+# # f = Field(field, 'x')
+# # field = f.make_turn()
+# # print_field(field)
+# #
+# # print("Making a move: ")
+#
+# t2 = time.time()
+# print(t2 - t1)

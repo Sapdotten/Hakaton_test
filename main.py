@@ -3,6 +3,7 @@ import json
 import requests
 from flask import Flask, request, jsonify
 from urllib.parse import urlparse
+from game import Field
 
 # в эту переменную потом запишется та фигура, за которую мы будем играть
 figure = 0
@@ -30,9 +31,11 @@ def make_move():
     # print("ДЕЛАЮ ХОД")
     make_move_data = request.get_json()
     # Ваш алгоритм для выбора хода
-    print(make_move_data["game_field"])
+    game = Field(make_move_data["game_field"], figure)
+    # print(make_move_data["game_field"])
+    game_field = game.make_turn()
 
-    move = {"game_field": make_best_move(make_move_data["game_field"])}
+    move = {"game_field": game_field}
 
     response = move
     return jsonify(response), 200, {'Content-Type': 'application/json'}
