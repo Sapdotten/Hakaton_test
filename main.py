@@ -22,7 +22,7 @@ MEDIATOR_URL =  os.environ['MEDIATOR_URL']
 
 # load_dotenv()
 BOT_ID = os.environ["BOT_ID"]
-BOT_PASSWORD = "123"
+BOT_PASSWORD = os.environ["BOT_PASSWORD_DOCKERFILE"]
 
 @app.route('/', methods=['GET'])
 def mainPage():
